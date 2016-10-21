@@ -84,9 +84,15 @@ module Papercrop
       def image_geometry(attachment_name, style = :original)
         @geometry                  ||= {}
         @geometry[attachment_name] ||= {}
-        
-        path = (self.send(attachment_name).options[:storage] == :filesystem) ? self.send(attachment_name).path(style) : self.send(attachment_name).url(style)
-        
+
+        path = if self.send(attachment_name).options[:storage] == :filesystem
+          self.send(attachment_name).path(style)
+        else
+          # Paperclip requires a fully qualified URL, see:
+          # https://github.com/thoughtbot/paperclip/issues/1627
+          "http:#{self.send(attachment_name).url(style)}"
+        end
+
         @geometry[attachment_name][style] ||= Paperclip::Geometry.from_file(path)
       end
 
